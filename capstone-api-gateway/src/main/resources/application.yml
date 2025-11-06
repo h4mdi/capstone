@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: capstone-api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://capstone-keycloak.duckdns.org/realms/training-realm
+          jwk-set-uri: https://capstone-keycloak.duckdns.org/realms/training-realm/protocol/openid-connect/certs
+
+  cloud:
+    gateway:
+      routes:
+        - id: client-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/clients/**
+          filters:
+            - StripPrefix=1
+
+        - id: account-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - StripPrefix=1

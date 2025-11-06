@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # ----------------------------
+  # KEYCLOAK (IAM Server)
+  # ----------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_URL: http://localhost:8080
+    command: start-dev
+    networks:
+      - api-net
+
+  # ----------------------------
+  # MICROSERVICES
+  # ----------------------------
+  client-service:
+    build: ./capstone-client-service
+    container_name: client-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+    networks:
+      - api-net
+
+  account-service:
+    build: ./capstone-account-service
+    container_name: account-service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+    networks:
+      - api-net
+
+  # ----------------------------
+  # SPRING CLOUD GATEWAY
+  # ----------------------------
+  api-gateway:
+    build: ./capstone-api-gateway
+    container_name: api-gateway
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      SPRING_CLOUD_GATEWAY_ROUTES_0_ID: client-service
+      SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://client-service:8081
+      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: "Path=/api/clients/**"
+      SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0: "StripPrefix=1"
+      SPRING_CLOUD_GATEWAY_ROUTES_1_ID: account-service
+      SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://account-service:8082
+      SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: "Path=/api/accounts/**"
+      SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0: "StripPrefix=1"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: https://capstone-keycloak.duckdns.org/realms/training-realm
+    depends_on:
+      - keycloak
+      - client-service
+      - account-service
+    networks:
+      - api-net
+
+  # ----------------------------
+  # WSO2 API MANAGER (Community Edition)
+  # ----------------------------
+  wso2-apim:
+    image: wso2/wso2am:4.3.0
+    container_name: wso2-apim
+    ports:
+      - "9443:9443"   # Admin Console (HTTPS)
+      - "8243:8243"   # Gateway HTTPS
+      - "8280:8280"   # Gateway HTTP
+      - "9763:9763"   # Carbon Console (HTTP)
+    environment:
+      # Reduce memory for lab (default is 2GB)
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+#    volumes:
+      # Optional: mount custom configs
+      # - ./wso2-config:/home/wso2carbon/wso2-config
+    networks:
+      - api-net
+
+networks:
+  api-net:
+    driver: bridge
