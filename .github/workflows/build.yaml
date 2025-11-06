@@ -54,5 +54,5 @@ jobs:
         working-directory: capstone-account-service
         run: |
           mvn clean package -DskipTests
-          docker build -t $ECR_REGISTRY/${{ secrets.ECR_REPOSITORY_ACCOUNT }}:latest .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_ACCOUNT:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_ACCOUNT:latest
