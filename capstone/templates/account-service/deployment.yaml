@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.accountService.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.accountService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.accountService.name }}
+    spec:
+      containers:
+        - name: {{ .Values.accountService.name }}
+          image: "{{ .Values.image.registry }}/capstone/{{ .Values.accountService.name }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.accountService.port }}

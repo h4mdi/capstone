@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apiGateway.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.apiGateway.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiGateway.name }}
+    spec:
+      containers:
+        - name: {{ .Values.apiGateway.name }}
+          image: "{{ .Values.image.registry }}/capstone/{{ .Values.apiGateway.name }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.apiGateway.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.apiGateway.name }}-config
